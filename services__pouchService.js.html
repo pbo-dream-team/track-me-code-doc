@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: router.js</title>
+    <title>JSDoc: Source: services/_pouchService.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: router.js</h1>
+    <h1 class="page-title">Source: services/_pouchService.js</h1>
 
     
 
@@ -26,50 +26,40 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { createRouter, createWebHistory } from 'vue-router'
-import Homescreen from './views/Homescreen.vue'
-import Projectsscreen from './views/Projectsscreen.vue'
-import Analysis from './views/Analysis.vue'
+            <pre class="prettyprint source linenums"><code>const PouchDB = require('pouchdb').default;
 
 /**
- * Different routes
+ * Test
+ * @class pouchService
  */
-const routes = [
-  {
-    path: '/',
-    name: 'Homescreen',
-    component: Homescreen
-  },
+export class pouchService {
+    db;
 
-  {
-    path: '/projects',
-    name: 'Projectsscreen',
-    component: Projectsscreen
-  },
+    constructor(dbName) {
+        this.db = new PouchDB(dbName);
+    }
 
-  {
-    path: '/analysis',
-    name: 'Analysis',
-    component: Analysis
-  },
-  // {
-  //   path: '/current-activity',
-  //   name: 'CurrentActivity',
-  //   component: () => import('./components/CurrentActivity.vue')
-  // }
-]
+    async getOne(id) {
+        return await this.db.get(id);
+    }
 
-/**
- * Generates a router
- * - Globally
- */
-const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
-  routes
-})
+    async getAll() {
+        return await this.db.allDocs({ include_docs: true });
+    }
 
-export default router
-</code></pre>
+    async create(document) {
+        var response = await this.db.post(document);
+        return response.id;
+    }
+
+    async update(document) {
+        this.db.put(document);
+    }
+
+    async delete(document) {
+        this.db.remove(document);
+    }
+}</code></pre>
         </article>
     </section>
 
