@@ -26,23 +26,30 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { pouchService } from "./_pouchService";
+            <pre class="prettyprint source linenums"><code>import { PouchService } from "./PouchService";
+import { TagService } from './TagService';
 
 /**
  * Test
- * @class activityService
+ * @class ActivityService
  */
-export class activityService {
+export class ActivityService {
     pouchService;
+    tagService;
 
     constructor() {
-        this.pouchService = new pouchService('activities');
+        this.pouchService = new PouchService('activities');
+        this.pouchService.addIndex('endTime');
+
+        this.tagService = new TagService();
     }
 
     async create() {
         var document = {
             "startTime": new Date().toISOString(),
             "endTime": "",
+            "pauseStartTime": "",
+            "totalPauseTime": 0,
             "description": "",
             "tags": [],
             "productivity": 0            
@@ -60,14 +67,32 @@ export class activityService {
         return this.pouchService.getAll();
     }
 
+    async getUnfinished() {
+        return this.pouchService.getByQuery({
+            selector: {
+                endTime: ""
+            }
+        });
+    }
+
+    async getTags(activityId) {
+        var tags = [];
+        var activity = await this.getOne(activityId);
+        for(let tagId of activity.tags) {
+            var tag = await this.tagService.getOne(tagId);
+            tags.push(tag);
+        }
+        return tags;
+    }
+
     async updateStartTime(activityId, startTime) {
-        var document = await this.pouchService.getOne(activityId);
+        var document = await this.getOne(activityId);
         document.startTime = new Date(startTime).toISOString();
         this.pouchService.update(document);
     }
 
     async updateEndTime(activityId, endTime = null) {
-        var document = await this.pouchService.getOne(activityId);
+        var document = await this.getOne(activityId);
         if(endTime == null) {
             document.endTime = new Date().toISOString();
         }          
@@ -77,35 +102,64 @@ export class activityService {
         this.pouchService.update(document);
     }
 
+    async pause(activityId) {
+        var document = await this.getOne(activityId);
+        document.pauseStartTime = new Date().toISOString();
+        this.pouchService.update(document);
+        
+        return document.pauseStartTime;
+    }
+
+    async resume(activityId) {
+        var document = await this.getOne(activityId);
+
+        var pauseTime = Date.parse(document.pauseStartTime);
+        var resumeTime = new Date().valueOf();
+        var pauseLength = resumeTime - pauseTime;
+
+        document.totalPauseTime = document.totalPauseTime + pauseLength;
+        document.pauseStartTime = null;
+
+        this.pouchService.update(document);
+
+        return pauseLength;
+    }
+
     async updateDescription(activityId, description) {
-        var document = await this.pouchService.getOne(activityId);
+        var document = await this.getOne(activityId);
         document.description = description;
         this.pouchService.update(document);
     }
 
     async updateProductivity(activityId, productivity) {
-        var document = await this.pouchService.getOne(activityId);
+        var document = await this.getOne(activityId);
         document.productivity = productivity;
         this.pouchService.update(document);
     }
 
     async addTag(activityId, tagId) {
-        var document = await this.pouchService.getOne(activityId);
+        var document = await this.getOne(activityId);
         document.tags.push(tagId);
         this.pouchService.update(document);
     }
 
     async removeTag(activityId, tagId) {
-        var document = await this.pouchService.getOne(activityId);
+        var document = await this.getOne(activityId);
         var index = document.tags.indexOf(tagId);
         if (index !== -1) {
             document.tags.splice(index, 1);
         }
         this.pouchService.update(document);
     }
+    
+    async clearTags(activityId) {
+        var document = await this.getOne(activityId);
+        document.tags = [];
+        this.pouchService.update(document);
+    }
 
     async delete(activityId) {
-        var document = await this.pouchService.getOne(activityId);
+        var document = await this.getOne(activityId);
         this.pouchService.delete(document);
     }
 }</code></pre>
@@ -118,13 +172,13 @@ export class activityService {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="activityService.html">activityService</a></li><li><a href="pouchService.html">pouchService</a></li></ul><h3>Global</h3><ul><li><a href="global.html#router">router</a></li><li><a href="global.html#routes">routes</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="ActivityService.html">ActivityService</a></li></ul><h3>Global</h3><ul><li><a href="global.html#router">router</a></li><li><a href="global.html#routes">routes</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Mon Dec 07 2020 13:58:45 GMT+0000 (Coordinated Universal Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Mon Dec 07 2020 16:38:58 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>
