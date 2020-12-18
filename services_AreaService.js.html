@@ -26,236 +26,233 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { PouchService } from "./PouchService";
-import { ProjectService } from './ProjectService';
-import { TagService } from './TagService';
+            <pre class="prettyprint source linenums"><code>import { PouchService } from './PouchService'
+import { ProjectService } from './ProjectService'
+import { TagService } from './TagService'
 
 /**
  * Provides access to the area database through a standardized interface.
- * 
+ *
  * @class
  */
 export class AreaService {
-    pouchService;
-    projectService;
-    tagService;
+    constructor () {
+      this.pouchService = new PouchService('areas')
+      this.pouchService.addIndex('projects')
 
-    constructor() {
-        this.pouchService = new PouchService('areas');
-        this.pouchService.addIndex('projects');
-
-        this.projectService = new ProjectService();
-        this.tagService = new TagService();
+      this.projectService = new ProjectService()
+      this.tagService = new TagService()
     }
 
     /**
      * Creates a new area in the database.
-     * 
+     *
      * @param {string} name - The name of the area.
      * @return {string} The GUID of the newly created area.
-     * 
-     * @function 
+     *
+     * @function
      */
-    async create(name) {
-        var document = {
-            "name": name,
-            "projects": [],
-            "tags": []
-        };
+    async create (name) {
+      var document = {
+        name: name,
+        projects: [],
+        tags: []
+      }
 
-        var id = this.pouchService.create(document);
-        return id;
+      var id = this.pouchService.create(document)
+      return id
     }
 
     /**
      * Gets the area with the specified ID from the database.
-     * 
+     *
      * @param {string} areaId - The ID of the desired area.
      * @return {Promise&lt;Object>} A promise to the requested area object.
-     * 
+     *
      * @function
      */
-    async getOne(areaId) {
-        return this.pouchService.getOne(areaId);
+    async getOne (areaId) {
+      return this.pouchService.getOne(areaId)
     }
 
     /**
      * Gets all areas from the database.
-     * 
+     *
      * @return {Promise&lt;Array&lt;Object>>} A promise to an array containing all area objects.
-     * 
+     *
      * @function
      */
-    async getAll() {
-        return this.pouchService.getAll();
+    async getAll () {
+      return this.pouchService.getAll()
     }
 
     /**
      * Gets the area that contains the specified project.
-     * 
+     *
      * @param {string} projectId - The ID of the project.
      * @return {Promise&lt;Object>} A promise to the area object that contains the specified project.
-     * 
+     *
      * @function
      */
-    async getForProject(projectId) {
-        var docs = await this.pouchService.getByQuery({
-            selector: {
-                projects: {
-                    $elemMatch: {
-                        $eq: projectId
-                    }
-                }              
+    async getForProject (projectId) {
+      var docs = await this.pouchService.getByQuery({
+        selector: {
+          projects: {
+            $elemMatch: {
+              $eq: projectId
             }
-        });
+          }
+        }
+      })
 
-        return docs[0];
+      return docs[0]
     }
 
     /**
      * Gets the area that contains the specified tag.
-     * 
+     *
      * @param {string} tagId - The ID of the tag.
-     * @return {Promise&lt;Object>} A promise to the area object that contains the specified tag. 
+     * @return {Promise&lt;Object>} A promise to the area object that contains the specified tag.
      */
-    async getForTag(tagId) {
-        var docs = await this.pouchService.getByQuery({
-            selector: {
-                tags: {
-                    $elemMatch: {
-                        $eq: tagId
-                    }
-                }
+    async getForTag (tagId) {
+      var docs = await this.pouchService.getByQuery({
+        selector: {
+          tags: {
+            $elemMatch: {
+              $eq: tagId
             }
-        });
+          }
+        }
+      })
 
-        return docs[0];
+      return docs[0]
     }
 
     /**
      * Gets all projects that the specified area contains.
-     * 
+     *
      * @param {string} areaId - The ID of the area to get the projects for.
      * @return {Promise&lt;Array&lt;Object>>} A promise to an array containing all project objects for the specified area.
-     * 
+     *
      * @function
      */
-    async getProjects(areaId) {
-        var projects = [];
-        var area = await this.getOne(areaId);
-        for(let projectId of area.projects) {
-            var project = await this.projectService.getOne(projectId);
-            projects.push(project);
-        }
-        return projects;
+    async getProjects (areaId) {
+      var projects = []
+      var area = await this.getOne(areaId)
+      for (const projectId of area.projects) {
+        var project = await this.projectService.getOne(projectId)
+        projects.push(project)
+      }
+      return projects
     }
 
     /**
      * Getas all tags for the specified area.
-     * 
+     *
      * @param {string} areaId - The ID of the area to get the tags for.
      * @return {Promise&lt;Array&lt;Object>>} A promise to an array containing all tag objects for the specified area.
-     * 
+     *
      * @function
      */
-    async getTags(areaId) {
-        var tags = [];
-        var area = await this.getOne(areaId);
-        for(let tagId of area.tags) {
-            var tag = await this.tagService.getOne(tagId);
-            tags.push(tag);
-        }
-        return tags;
+    async getTags (areaId) {
+      var tags = []
+      var area = await this.getOne(areaId)
+      for (const tagId of area.tags) {
+        var tag = await this.tagService.getOne(tagId)
+        tags.push(tag)
+      }
+      return tags
     }
 
     /**
      * Updates the name of the specified area.
-     * 
+     *
      * @param {string} areaId - The ID of the area to change the name for.
      * @param {string} name - The new name.
-     * 
+     *
      * @function
      */
-    async updateName(areaId, name) {
-        var document = await this.getOne(areaId);
-        document.name = name;
-        this.pouchService.update(document);
+    async updateName (areaId, name) {
+      var document = await this.getOne(areaId)
+      document.name = name
+      this.pouchService.update(document)
     }
 
     /**
      * Adds the tag with the specified ID to the specified area.
-     * 
+     *
      * @param {string} areaId - The ID of the area to add the tag to.
      * @param {string} tagId - The ID of the tag to add.
-     * 
+     *
      * @function
      */
-    async addTag(areaId, tagId) {
-        var document = await this.getOne(areaId);
-        document.tags.push(tagId);
-        this.pouchService.update(document);
+    async addTag (areaId, tagId) {
+      var document = await this.getOne(areaId)
+      document.tags.push(tagId)
+      this.pouchService.update(document)
     }
 
     /**
      * Removes the tag with the specified ID from the specified area.
-     * 
+     *
      * @param {string} areaId - The ID of the area to remove the tag from.
      * @param {string} tagId - The ID of the tag to remove.
-     * 
+     *
      * @function
      */
-    async removeTag(areaId, tagId) {
-        var document = await this.getOne(areaId);
-        var index = document.tags.indexOf(tagId);
-        if (index !== -1) {
-            document.tags.splice(index, 1);
-        }
-        this.pouchService.update(document);
+    async removeTag (areaId, tagId) {
+      var document = await this.getOne(areaId)
+      var index = document.tags.indexOf(tagId)
+      if (index !== -1) {
+        document.tags.splice(index, 1)
+      }
+      this.pouchService.update(document)
     }
 
     /**
      * Adds the project with the specified ID to the specified area.
-     * 
+     *
      * @param {string} areaId - The ID of the area to add the project to.
      * @param {string} projectId - The ID of the project to add.
      *
      * @function
      */
-    async addProject(areaId, projectId) {
-        var document = await this.getOne(areaId);
-        document.projects.push(projectId);
-        this.pouchService.update(document);
+    async addProject (areaId, projectId) {
+      var document = await this.getOne(areaId)
+      document.projects.push(projectId)
+      this.pouchService.update(document)
     }
 
     /**
      * Removes the project with the specified ID from the specified area.
-     * 
+     *
      * @param {string} areaId - The ID of the area to remove the project from.
      * @param {string} projectId - The ID of the project to remove.
-     * 
+     *
      * @function
      */
-    async removeProject(areaId, projectId) {
-        var document = await this.getOne(areaId);
-        var index = document.projects.indexOf(projectId);
-        if (index !== -1) {
-            document.projects.splice(index, 1);
-        }
-        this.pouchService.update(document);
+    async removeProject (areaId, projectId) {
+      var document = await this.getOne(areaId)
+      var index = document.projects.indexOf(projectId)
+      if (index !== -1) {
+        document.projects.splice(index, 1)
+      }
+      this.pouchService.update(document)
     }
 
     /**
      * Deletes the specified area from the database.
-     * 
+     *
      * @param {string} areaId - The ID of the area to delete.
-     * 
+     *
      * @function
      */
-    async delete(areaId) {
-        var document = await this.getOne(areaId);
-        this.pouchService.delete(document);
+    async delete (areaId) {
+      var document = await this.getOne(areaId)
+      this.pouchService.delete(document)
     }
-}</code></pre>
+}
+</code></pre>
         </article>
     </section>
 
@@ -271,7 +268,7 @@ export class AreaService {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Dec 15 2020 10:02:54 GMT+0000 (Coordinated Universal Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Fri Dec 18 2020 15:23:38 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>

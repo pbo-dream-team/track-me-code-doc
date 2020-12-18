@@ -26,163 +26,161 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { PouchService } from "./PouchService";
-import { ActivityService } from "./ActivityService";
+            <pre class="prettyprint source linenums"><code>import { PouchService } from './PouchService'
+import { ActivityService } from './ActivityService'
 
 /**
  * Provides access to the project database through a standardized interface.
- * 
+ *
  * @class
  */
 export class ProjectService {
-    pouchService;
-    activityService;
+    constructor () {
+      this.pouchService = new PouchService('projects')
+      this.pouchService.addIndex('activities')
 
-    constructor() {
-        this.pouchService = new PouchService('projects');
-        this.pouchService.addIndex('activities');
-
-        this.activityService = new ActivityService();
+      this.activityService = new ActivityService()
     }
 
     /**
      * Adds a new project to the database.
-     * 
+     *
      * @param {string} name - The name of the project to add.
-     * @return {string} The GUID of the newly created project. 
-     * 
+     * @return {string} The GUID of the newly created project.
+     *
      * @function
      */
-    async create(name) {
-        var document = {
-            "name": name,
-            "activities": []
-        };
+    async create (name) {
+      var document = {
+        name: name,
+        activities: []
+      }
 
-        var id = this.pouchService.create(document);
-        return id;
+      var id = this.pouchService.create(document)
+      return id
     }
 
     /**
      * Gets the project with the specified ID from the database.
-     * 
+     *
      * @param {string} projectId - The ID of the desired project.
      * @return {Promise&lt;Object>} A promise to the requested project object.
-     * 
+     *
      * @function
      */
-    async getOne(projectId) {
-        return this.pouchService.getOne(projectId);
+    async getOne (projectId) {
+      return this.pouchService.getOne(projectId)
     }
 
     /**
      * Gets all projects from the database.
-     * 
+     *
      * @return {Promise&lt;Array&lt;Object>>} A promise to an array containing all project objects.
-     * 
+     *
      * @function
      */
-    async getAll() {
-        return this.pouchService.getAll();
+    async getAll () {
+      return this.pouchService.getAll()
     }
 
     /**
      * Gets the project that contains the specified activity.
-     * 
+     *
      * @param {string} activityId - The ID of the activity to get the project for.
      * @return {Promise&lt;Object>} A promise to the project object that contains the activity.
-     * 
+     *
      * @function
      */
-    async getForActivity(activityId) {
-        var docs = await this.pouchService.getByQuery({
-            selector: {
-                activities: {
-                    $elemMatch: {
-                        $eq: activityId
-                    }
-                }              
+    async getForActivity (activityId) {
+      var docs = await this.pouchService.getByQuery({
+        selector: {
+          activities: {
+            $elemMatch: {
+              $eq: activityId
             }
-        });
+          }
+        }
+      })
 
-        return docs[0];
+      return docs[0]
     }
 
     /**
      * Gets all activites for the specified project.
-     * 
+     *
      * @param {string} projectId - The ID of the project to get the activities for.
      * @return {Promise&lt;Array&lt;Object>>} A promise to an array containing the activity objects for the project.
-     * 
+     *
      * @function
      */
-    async getActivities(projectId) {
-        var activities = [];
-        var project = await this.getOne(projectId);
-        for(let activityId of project.activities) {
-            var activity = await this.activityService.getOne(activityId);
-            activities.push(activity);
-        }
-        return activities;
+    async getActivities (projectId) {
+      var activities = []
+      var project = await this.getOne(projectId)
+      for (const activityId of project.activities) {
+        var activity = await this.activityService.getOne(activityId)
+        activities.push(activity)
+      }
+      return activities
     }
 
     /**
      * Updates the name of the specified project.
-     * 
+     *
      * @param {string} projectId - The ID of the project to update the name for.
      * @param {string} name - The new name for the project.
-     * 
+     *
      * @function
      */
-    async updateName(projectId, name) {
-        var document = await this.pouchService.getOne(projectId);
-        document.name = name;
-        this.pouchService.update(document);
+    async updateName (projectId, name) {
+      var document = await this.pouchService.getOne(projectId)
+      document.name = name
+      this.pouchService.update(document)
     }
 
     /**
      * Adds the activity with the specified ID to the specified project.
-     * 
-     * @param {string} projectId - The ID of the project to add the activity to. 
+     *
+     * @param {string} projectId - The ID of the project to add the activity to.
      * @param {string} activityId - The ID of the activity to add to the project.
-     * 
+     *
      * @function
      */
-    async addActivity(projectId, activityId) {
-        var document = await this.pouchService.getOne(projectId);
-        document.activities.push(activityId);
-        this.pouchService.update(document);
+    async addActivity (projectId, activityId) {
+      var document = await this.pouchService.getOne(projectId)
+      document.activities.push(activityId)
+      this.pouchService.update(document)
     }
 
     /**
      * Removes the activity with the specified ID from the specified object.
-     * 
+     *
      * @param {string} projectId - The ID of the project to remove the activity from.
      * @param {string} activityId - The ID of the activity to remove from the project.
-     * 
+     *
      * @function
      */
-    async removeActivity(projectId, activityId) {
-        var document = await this.pouchService.getOne(projectId);
-        var index = document.activities.indexOf(activityId);
-        if (index !== -1) {
-            document.activities.splice(index, 1);
-        }
-        this.pouchService.update(document);
+    async removeActivity (projectId, activityId) {
+      var document = await this.pouchService.getOne(projectId)
+      var index = document.activities.indexOf(activityId)
+      if (index !== -1) {
+        document.activities.splice(index, 1)
+      }
+      this.pouchService.update(document)
     }
 
     /**
      * Removes the specified project from the database.
-     * 
-     * @param {string} projectId - The ID of the project to remove. 
-     * 
+     *
+     * @param {string} projectId - The ID of the project to remove.
+     *
      * @function
      */
-    async delete(projectId) {
-        var document = await this.pouchService.getOne(projectId);
-        this.pouchService.delete(document);
+    async delete (projectId) {
+      var document = await this.pouchService.getOne(projectId)
+      this.pouchService.delete(document)
     }
-}</code></pre>
+}
+</code></pre>
         </article>
     </section>
 
@@ -198,7 +196,7 @@ export class ProjectService {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Dec 15 2020 10:02:54 GMT+0000 (Coordinated Universal Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Fri Dec 18 2020 15:23:38 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>

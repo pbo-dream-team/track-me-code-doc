@@ -26,251 +26,248 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { PouchService } from "./PouchService";
-import { TagService } from './TagService';
+            <pre class="prettyprint source linenums"><code>import { PouchService } from './PouchService'
+import { TagService } from './TagService'
 
 /**
  * Provides access to the activities database through a standardized interface.
- * 
+ *
  * @class
  */
 export class ActivityService {
-    pouchService;
-    tagService;
+    constructor () {
+      this.pouchService = new PouchService('activities')
+      this.pouchService.addIndex('endTime')
 
-    constructor() {
-        this.pouchService = new PouchService('activities');
-        this.pouchService.addIndex('endTime');
-
-        this.tagService = new TagService();
+      this.tagService = new TagService()
     }
 
     /**
      * Creates a new activity in the database with default values.
-     * 
+     *
      * @return {string} The GUID of the newly created activity.
-     * 
+     *
      * @function
      */
-    async create() {
-        var document = {
-            "startTime": new Date().toISOString(),
-            "endTime": "",
-            "pauseStartTime": "",
-            "totalPauseTime": 0,
-            "description": "",
-            "tags": [],
-            "productivity": 0            
-        };
+    async create () {
+      var document = {
+        startTime: new Date().toISOString(),
+        endTime: '',
+        pauseStartTime: '',
+        totalPauseTime: 0,
+        description: '',
+        tags: [],
+        productivity: 0
+      }
 
-        var id = await this.pouchService.create(document);
-        return id;
+      var id = await this.pouchService.create(document)
+      return id
     }
 
     /**
      * Gets the activity with the specified ID from the database.
-     * 
+     *
      * @param {string} activityId - The ID of the desired activity.
      * @return {Promise&lt;Object>} A promise to the requested activity object.
-     * 
+     *
      * @function
      */
-    async getOne(activityId) {
-        return this.pouchService.getOne(activityId);
+    async getOne (activityId) {
+      return this.pouchService.getOne(activityId)
     }
 
     /**
      * Gets all activities from the database.
-     * 
+     *
      * @return {Promise&lt;Array&lt;Object>>} A promise to an array containing all activity objects.
-     * 
+     *
      * @function
      */
-    async getAll() {
-        return this.pouchService.getAll();
+    async getAll () {
+      return this.pouchService.getAll()
     }
 
     /**
      * Gets all activities where endTime has not been set yet. Normally, the returned array should only contain one element.
-     * 
+     *
      * @return {Promise&lt;Array&lt;Object>>} A promise to an array containing all unfinished activities.
-     * 
+     *
      * @function
      */
-    async getUnfinished() {
-        return this.pouchService.getByQuery({
-            selector: {
-                endTime: ""
-            }
-        });
+    async getUnfinished () {
+      return this.pouchService.getByQuery({
+        selector: {
+          endTime: ''
+        }
+      })
     }
 
-    async getTags(activityId) {
-        var tags = [];
-        var activity = await this.getOne(activityId);
-        for(let tagId of activity.tags) {
-            var tag = await this.tagService.getOne(tagId);
-            tags.push(tag);
-        }
-        return tags;
+    async getTags (activityId) {
+      var tags = []
+      var activity = await this.getOne(activityId)
+      for (const tagId of activity.tags) {
+        var tag = await this.tagService.getOne(tagId)
+        tags.push(tag)
+      }
+      return tags
     }
 
     /**
      * Updates the startTime of the specified activity.
-     * 
-     * @param {string} activityId - The ID of the activity to update the startTime for. 
+     *
+     * @param {string} activityId - The ID of the activity to update the startTime for.
      * @param {string} startTime - An ISO-8601-compliant string containing the new startTime.
-     * 
+     *
      * @function
      */
-    async updateStartTime(activityId, startTime) {
-        var document = await this.getOne(activityId);
-        document.startTime = new Date(startTime).toISOString();
-        this.pouchService.update(document);
+    async updateStartTime (activityId, startTime) {
+      var document = await this.getOne(activityId)
+      document.startTime = new Date(startTime).toISOString()
+      this.pouchService.update(document)
     }
 
     /**
      * Updates the endTime of the specified activity.
-     * 
-     * @param {string} activityId - The ID of the activity to update the endTime for. 
+     *
+     * @param {string} activityId - The ID of the activity to update the endTime for.
      * @param {string} endTime - An ISO-8601-compliant string containing the new endTime.
-     * 
+     *
      * @function
      */
-    async updateEndTime(activityId, endTime = null) {
-        var document = await this.getOne(activityId);
-        if(endTime == null) {
-            document.endTime = new Date().toISOString();
-        }          
-        else {
-            document.endTime = new Date(endTime).toISOString();
-        }               
-        this.pouchService.update(document);
+    async updateEndTime (activityId, endTime = null) {
+      var document = await this.getOne(activityId)
+      if (endTime == null) {
+        document.endTime = new Date().toISOString()
+      } else {
+        document.endTime = new Date(endTime).toISOString()
+      }
+      this.pouchService.update(document)
     }
 
     /**
      * Pauses the specified activity.
-     * 
+     *
      * @param {string} activityId - The ID of the activity to pause.
      * @return {string} An ISO-8601-compliant string containing the time the activity was paused.
-     * 
+     *
      * @function
      */
-    async pause(activityId) {
-        var document = await this.getOne(activityId);
-        document.pauseStartTime = new Date().toISOString();
-        this.pouchService.update(document);
-        
-        return document.pauseStartTime;
+    async pause (activityId) {
+      var document = await this.getOne(activityId)
+      document.pauseStartTime = new Date().toISOString()
+      this.pouchService.update(document)
+
+      return document.pauseStartTime
     }
 
     /**
      * Resumes the specified activity.
-     * 
+     *
      * @param {string} activityId - The ID of the activity to resume.
      * @return {Number} The length of the pause in milliseconds.
-     * 
+     *
      * @function
      */
-    async resume(activityId) {
-        var document = await this.getOne(activityId);
+    async resume (activityId) {
+      var document = await this.getOne(activityId)
 
-        var pauseTime = Date.parse(document.pauseStartTime);
-        var resumeTime = new Date().valueOf();
-        var pauseLength = resumeTime - pauseTime;
+      var pauseTime = Date.parse(document.pauseStartTime)
+      var resumeTime = new Date().valueOf()
+      var pauseLength = resumeTime - pauseTime
 
-        document.totalPauseTime = document.totalPauseTime + pauseLength;
-        document.pauseStartTime = null;
+      document.totalPauseTime = document.totalPauseTime + pauseLength
+      document.pauseStartTime = null
 
-        this.pouchService.update(document);
+      this.pouchService.update(document)
 
-        return pauseLength;
+      return pauseLength
     }
 
     /**
      * Updates the description of the specified activity.
-     * 
-     * @param {string} activityId - The ID of the activity to update the description for. 
+     *
+     * @param {string} activityId - The ID of the activity to update the description for.
      * @param {string} description - The new description.
-     * 
+     *
      * @function
      */
-    async updateDescription(activityId, description) {
-        var document = await this.getOne(activityId);
-        document.description = description;
-        this.pouchService.update(document);
+    async updateDescription (activityId, description) {
+      var document = await this.getOne(activityId)
+      document.description = description
+      this.pouchService.update(document)
     }
 
     /**
      * Updates the productivity of the specified activity.
-     * 
+     *
      * @param {string} activityId - The ID of the activity to update the productivity for.
      * @param {Number} productivity - An integer value between 0 and 5 describing the productivity. 0 means nothing is set, 1 is the highest productivity, 5 the lowest.
-     * 
+     *
      * @function
      */
-    async updateProductivity(activityId, productivity) {
-        var document = await this.getOne(activityId);
-        document.productivity = productivity;
-        this.pouchService.update(document);
+    async updateProductivity (activityId, productivity) {
+      var document = await this.getOne(activityId)
+      document.productivity = productivity
+      this.pouchService.update(document)
     }
 
     /**
      * Adds the tag with the specified ID to the specified activity.
-     * 
+     *
      * @param {string} activityId - The ID of the activity to add the tag to.
      * @param {string} tagId - The ID of the tag to add to the activity.
-     * 
+     *
      * @function
      */
-    async addTag(activityId, tagId) {
-        var document = await this.getOne(activityId);
-        document.tags.push(tagId);
-        this.pouchService.update(document);
+    async addTag (activityId, tagId) {
+      var document = await this.getOne(activityId)
+      document.tags.push(tagId)
+      this.pouchService.update(document)
     }
 
     /**
      * Removes the tag with the specified ID from the specified activity.
-     * 
-     * @param {string} activityId - The ID of the activity to remove the tag from. 
+     *
+     * @param {string} activityId - The ID of the activity to remove the tag from.
      * @param {string} tagId - The ID of the tag to remove.
-     * 
+     *
      * @function
      */
-    async removeTag(activityId, tagId) {
-        var document = await this.getOne(activityId);
-        var index = document.tags.indexOf(tagId);
-        if (index !== -1) {
-            document.tags.splice(index, 1);
-        }
-        this.pouchService.update(document);
+    async removeTag (activityId, tagId) {
+      var document = await this.getOne(activityId)
+      var index = document.tags.indexOf(tagId)
+      if (index !== -1) {
+        document.tags.splice(index, 1)
+      }
+      this.pouchService.update(document)
     }
-    
+
     /**
      * Removes all tags from the specified activity.
-     * 
+     *
      * @param {string} activityId - The ID of the activity to clear all tags from.
-     * 
+     *
      * @function
      */
-    async clearTags(activityId) {
-        var document = await this.getOne(activityId);
-        document.tags = [];
-        this.pouchService.update(document);
+    async clearTags (activityId) {
+      var document = await this.getOne(activityId)
+      document.tags = []
+      this.pouchService.update(document)
     }
 
     /**
      * Deletes the specified activity from the database.
-     * 
-     * @param {string} activityId - The ID of the activity to delete. 
-     * 
+     *
+     * @param {string} activityId - The ID of the activity to delete.
+     *
      * @function
      */
-    async delete(activityId) {
-        var document = await this.getOne(activityId);
-        this.pouchService.delete(document);
+    async delete (activityId) {
+      var document = await this.getOne(activityId)
+      this.pouchService.delete(document)
     }
-}</code></pre>
+}
+</code></pre>
         </article>
     </section>
 
@@ -286,7 +283,7 @@ export class ActivityService {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Dec 15 2020 10:02:54 GMT+0000 (Coordinated Universal Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Fri Dec 18 2020 15:23:38 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>
