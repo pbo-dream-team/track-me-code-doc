@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: router.js</title>
+    <title>JSDoc: Source: scripts/compare.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: router.js</h1>
+    <h1 class="page-title">Source: scripts/compare.js</h1>
 
     
 
@@ -26,44 +26,23 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { createRouter, createWebHistory } from 'vue-router'
-import Dashboard from './views/Dashboard.vue'
-import Manage from './views/Manage.vue'
-import Analysis from './views/Analysis.vue'
-
-/**
- * Different routes
+            <pre class="prettyprint source linenums"><code>/**
+ * Compares 2 Arrays by the property Name
+ * 
+ * @param {*} a Compare Entry A
+ * @param {*} b Compare Entry B
  */
-const routes = [
-  {
-    path: '/',
-    name: 'Dashboard',
-    component: Dashboard
-  },
-  {
-    path: '/manage',
-    name: 'Manage',
-    component: Manage
-  },
+export function compareArrayByName(a, b) {
+    if (a.name.toUpperCase() &lt; b.name.toUpperCase()) {
+        return -1
+    }
 
-  {
-    path: '/analysis',
-    name: 'Analysis',
-    component: Analysis
-  }
-]
+    if (a.name.toUpperCase() > b.name.toUpperCase()) {
+        return 1
+    }
 
-/**
- * Generates a router
- * - Globally
- */
-const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
-  routes
-})
-
-export default router
-</code></pre>
+    return 0
+} </code></pre>
         </article>
     </section>
 
